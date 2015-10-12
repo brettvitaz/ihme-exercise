@@ -162,7 +162,6 @@
 
         barEnter.append("rect")
                 .attr("transform", function (d) {
-                    console.log((margin.top + height - yScale(d.mean)));
                     return "translate(0," + (margin.top + yScale(d.mean)) + ")"
 
                 })
@@ -191,12 +190,10 @@
 
         barUpdate.select("rect")
                 .attr("transform", function (d) {
-                    console.log("trans" + (margin.top + height - yScale(d.mean)));
                     return "translate(0," + (margin.top + yScale(d.mean)) + ")"
 
                 })
                 .attr("height", function (d) {
-                    console.log("update" + d.mean);
                     return height - yScale(d.mean);
                 })
                 .style("fill", getBarColor)
@@ -219,9 +216,6 @@
     }
 
     function change() {
-        console.log(yearMenu.property("value"));
-        console.log(genderMenu.property("value"));
-        console.log(ageGroupMenu.property("value"));
         var ageGroupSelected = _.find(ageGroupList, function (d) {
             return d.age_group == ageGroupMenu.property("value");
         });
