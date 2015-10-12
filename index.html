@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IHME JavaScript D3 Exercise</title>
+    <script type="text/javascript" src="libs/d3/d3.v3.js"></script>
+</head>
+<body>
+<p>IHME JavaScript D3 Exercise</p>
+<script type="text/javascript">
+    var dataset;
+
+    d3.csv("data/IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV", function(data) {
+        dataset = data;
+
+        redraw();
+    });
+
+    function redraw() {
+        console.log("redraw")
+    }
+</script>
+</body>
+</html>
