@@ -238,10 +238,13 @@
                     return i * 50;
                 });
 
+        var getTitleText = function (d) {
+            return d.location_name + ": " + Math.round(d.lower * 1000) / 10 + "% - " +
+                    Math.round(d.upper * 1000) / 10 + "%";
+        };
+
         barUpdate.select("title")
-                .text(function (d) {
-                    return d.location_name + " - " + Math.round(d.mean * 1000) / 10 + "%";
-                });
+                .text(getTitleText);
 
         barUpdate.select("text")
                 .attr("transform", function (d) {
