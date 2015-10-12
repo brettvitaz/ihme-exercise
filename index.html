@@ -4,14 +4,23 @@
     <meta charset="UTF-8">
     <title>IHME JavaScript D3 Exercise</title>
     <script type="text/javascript" src="libs/d3/d3.v3.js"></script>
+    <script type="text/javascript" src="libs/underscore/underscore.js"></script>
 </head>
 <body>
-<p>IHME JavaScript D3 Exercise</p>
+<h3>IHME JavaScript D3 Exercise</h3>
+<p>Graph of the top 10 countries with highest prevalence of adult obesity by year.</p>
 <script type="text/javascript">
 
     var margin = {top: 20, right: 20, bottom: 20, left: 20};
     var width = 720;
     var height = 320;
+
+    var yearRange; // = d3.range(2013, 1990 - 1, -1);
+
+    // Filter values
+    var ageGroupIdDesired = 38;  // Adult
+    var metricDesired = "obese";
+    var sexIdDesired = 3; // Both male and female
 
     var format = d3.format(".1%");
 
@@ -31,32 +40,49 @@
     svg.append("g").attr("class", "y axis");
 
     d3.select("body").append("p")
-            .attr("id", "menu")
-            .text("Age: ")
-            .append("select");
+            .text("Selected Year: ")
+            .append("select")
+            .attr("id", "yearMenu");
 
-    var menu = d3.select("#menu select")
+    var yearMenu = d3.select("#yearMenu")
             .on("change", change);
 
     var dataset;
+    var yearDataset;
+    var topCountries;
 
     d3.csv("data/IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV", function (data) {
-        dataset = data;
+        dataset = data.filter(function (d) {
+            return d.age_group_id == ageGroupIdDesired &&
+                    d.metric == metricDesired &&
+                    d.sex_id == sexIdDesired;
+        });
 
-        menu.selectAll("option")
-                .data(["Adults", "Children"])
+        yearRange = _.chain(data).pluck("year").unique().compact().reverse().value();
+
+        yearMenu.selectAll("option")
+                .data(yearRange)
                 .enter().append("option")
                 .text(function (d) { return d; });
 
-        redraw();
+        change();
     });
 
     function redraw() {
         console.log("redraw");
+        topCountries = dataset.sort(function (a, b) {
+            return b.mean - a.mean;
+        })
+                .slice(0, 10);
     }
 
     function change() {
-        console.log("change");
+        console.log(yearMenu.property("value"));
+        yearDataset = dataset.filter(function (d) {
+            return d.year == parseInt(yearMenu.property("value"));
+        });
+
+
         redraw();
     }
 
