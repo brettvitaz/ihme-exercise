@@ -10,6 +10,11 @@
             fill: black;
         }
 
+        .bar text {
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+
         .axis path,
         .axis line {
             fill: none;
@@ -25,7 +30,7 @@
 </head>
 <body>
 <h3>IHME JavaScript D3 Exercise</h3>
-<p>Graph of the top 10 countries with highest prevalence of obesity by year.</p>
+<h4>Graph of the top 10 countries with highest prevalence of obesity by year.</h4>
 <script type="text/javascript">
 
     var margin = {top: 20, right: 20, bottom: 20, left: 50};
@@ -37,10 +42,12 @@
 
     // Filter values
     var ageGroupList = [
-        {"age_group_id": 36, "age_group": "children"},
-        {"age_group_id": 38, "age_group": "adults"}
+        {"age_group_id": 38, "age_group": "adults"},
+        {"age_group_id": 36, "age_group": "children"}
     ];
     var metricDesired = "obese";
+
+    var meanMaxValue = 1;
 
     var format = d3.format(".1%");
 
@@ -64,7 +71,11 @@
     svg.append("g").attr("class", "x axis");
     svg.append("g").attr("class", "y axis");
 
-    d3.select("body").append("p")
+    var menuGroup = d3.select("body").append("g")
+            .attr("id", "menuGroup")
+            .style("display", "none");
+
+    menuGroup.append("p")
             .text("Select year: ")
             .append("select")
             .attr("id", "yearMenu");
@@ -72,7 +83,7 @@
     var yearMenu = d3.select("#yearMenu")
             .on("change", change);
 
-    d3.select("body").append("p")
+    menuGroup.append("p")
             .text("Select gender: ")
             .append("select")
             .attr("id", "genderMenu");
@@ -80,7 +91,7 @@
     var genderMenu = d3.select("#genderMenu")
             .on("change", change);
 
-    d3.select("body").append("p")
+    menuGroup.append("p")
             .text("Select age group: ")
             .append("select")
             .attr("id", "ageGroupMenu");
@@ -96,6 +107,8 @@
         dataset = data.filter(function (d) {
             return d.metric == metricDesired;
         });
+
+        meanMaxValue = d3.max(dataset.filter(function (d) { return d.metric == "obese" && d.age_group_id == 38 }), function (d) { return d.mean });
 
         yearRange = _.chain(data).pluck("year").unique().compact().reverse().value();
         genderRange = _.chain(data).pluck("sex").unique().compact().reverse().value();
@@ -121,6 +134,8 @@
                     return d.age_group;
                 });
 
+        d3.selectAll("#menuGroup").style("display", "block");
+
         change();
     });
 
@@ -135,7 +150,10 @@
             return d.location;
         }));
 
-        yScale.domain([0, topCountries[0].mean]);
+
+        // The graph appears more interesting when the y scale remains static.
+        // yScale.domain([0, topCountries[0].mean * 1.2]);
+        yScale.domain([0, meanMaxValue * 1.2]);
 
         var getBarColor = function () {
             var gender = genderMenu.property("value");
@@ -186,9 +204,28 @@
                     return d.location_name + " - " + Math.round(d.mean * 1000) / 10 + "%";
                 });
 
+        barEnter.append("text")
+                .attr("transform", function (d) {
+                    return "translate(0," + (margin.top + yScale(d.mean) + 20) + ")"
+
+                })
+                .attr("x", function (d) {
+                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                })
+                .attr("y", 0)
+                .text(function (d) {
+                    return Math.round(d.mean * 1000) / 10 + "%";
+                })
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .style("pointer-events", "none");
+
         var barUpdate = d3.transition(bar);
 
         barUpdate.select("rect")
+                .each("start", function () {
+                    d3.select(this).style("fill", "black")
+                })
                 .attr("transform", function (d) {
                     return "translate(0," + (margin.top + yScale(d.mean)) + ")"
 
@@ -204,6 +241,22 @@
         barUpdate.select("title")
                 .text(function (d) {
                     return d.location_name + " - " + Math.round(d.mean * 1000) / 10 + "%";
+                });
+
+        barUpdate.select("text")
+                .attr("transform", function (d) {
+                    return "translate(0," + (margin.top + yScale(d.mean) + 20) + ")"
+
+                })
+                .attr("x", function (d) {
+                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                })
+                .attr("y", 0)
+                .text(function (d) {
+                    return Math.round(d.mean * 1000) / 10 + "%";
+                })
+                .delay(function (d, i) {
+                    return i * 50;
                 });
 
         svg.select(".x.axis")
@@ -225,9 +278,15 @@
                     d.age_group_id == ageGroupSelected.age_group_id;
         });
 
-        d3.transition().duration(1000).each(redraw);
+        d3.transition().duration(500).each(redraw);
     }
 
 </script>
+<p id="menuGroup" style="display: none;">Interesting values are
+    <a href="javascript:ageGroupMenu.property('value', 'adults'),genderMenu.property('value', 'female'),yearMenu.property('value', '2013'),change()">female adults in 2013</a>
+    having the highest prevalence of obesity, and
+    <a href="javascript:ageGroupMenu.property('value', 'children'),genderMenu.property('value', 'male'),yearMenu.property('value', '1990'),change()">male children in 1990</a>
+    having the lowest prevalence of obesity.
+</p>
 </body>
 </html>
