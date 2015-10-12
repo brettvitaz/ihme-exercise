@@ -8,17 +8,58 @@
 <body>
 <p>IHME JavaScript D3 Exercise</p>
 <script type="text/javascript">
+
+    var margin = {top: 20, right: 20, bottom: 20, left: 20};
+    var width = 720;
+    var height = 320;
+
+    var format = d3.format(".1%");
+
+    var xScale = d3.scale.ordinal().rangeRoundBands([0, width], .1);
+    var yScale = d3.scale.linear().range([0, height]);
+
+    var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("bottom")
+            .tickFormat(format);
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom);
+
+    svg.append("g").attr("class", "x axis");
+    svg.append("g").attr("class", "y axis");
+
+    d3.select("body").append("p")
+            .attr("id", "menu")
+            .text("Age: ")
+            .append("select");
+
+    var menu = d3.select("#menu select")
+            .on("change", change);
+
     var dataset;
 
-    d3.csv("data/IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV", function(data) {
+    d3.csv("data/IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV", function (data) {
         dataset = data;
+
+        menu.selectAll("option")
+                .data(["Adults", "Children"])
+                .enter().append("option")
+                .text(function (d) { return d; });
 
         redraw();
     });
 
     function redraw() {
-        console.log("redraw")
+        console.log("redraw");
     }
+
+    function change() {
+        console.log("change");
+        redraw();
+    }
+
 </script>
 </body>
 </html>
