@@ -52,6 +52,7 @@
 
     var format = d3.format(".1%");
 
+    // TODO - Refactor to use margin.
     var xScale = d3.scale.ordinal().rangeRoundBands([0, width], .1);
     var yScale = d3.scale.linear().range([height, 0]);
 
@@ -109,7 +110,11 @@
             return d.metric == metricDesired;
         });
 
-        meanMaxValue = d3.max(dataset.filter(function (d) { return d.metric == metricDesired && d.age_group_id == 38 }), function (d) { return d.mean });
+        meanMaxValue = d3.max(dataset.filter(function (d) {
+            return d.metric == metricDesired && d.age_group_id == 38
+        }), function (d) {
+            return d.mean
+        });
 
         yearRange = _.chain(data).pluck("year").unique().compact().reverse().value();
         genderRange = _.chain(data).pluck("sex").unique().compact().reverse().value();
@@ -140,6 +145,113 @@
         change();
     });
 
+    var barText = function (d) {
+        return Math.round(d.mean * 1000) / 10.0 + "%";
+    };
+
+    var barTitleText = function (d) {
+        return d.location_name + ": " + Math.round(d.lower * 1000) / 10.0 + "% - " +
+                Math.round(d.upper * 1000) / 10.0 + "%";
+    };
+
+    var getBarColor = function () {
+        var gender = genderMenu.property("value");
+        var ageGroup = ageGroupMenu.property("value");
+        if (gender == "male" && ageGroup == "adults") {
+            return "MediumBlue";
+        } else if (gender == "male" && ageGroup == "children") {
+            return "SkyBlue";
+        } else if (gender == "female" && ageGroup == "adults") {
+            return "MediumVioletRed";
+        } else if (gender == "female" && ageGroup == "children") {
+            return "Pink";
+        } else if (gender == "both" && ageGroup == "adults") {
+            return "Green";
+        } else if (gender == "both" && ageGroup == "children") {
+            return "LightGreen";
+        }
+    };
+
+    var barSvgRect = function () {
+        this
+                .attr("transform", function (d) {
+                    return "translate(0," + (margin.top + yScale(d.mean)) + ")"
+                })
+                .attr("height", function (d) {
+                    return height - yScale(d.mean);
+                })
+                .attr("width", xScale.rangeBand())
+                .attr("x", function (d) {
+                    return margin.left + xScale(d.location);
+                })
+                .attr("y", 0)
+                .style("fill", getBarColor)
+    };
+
+    var barSvgRectUpdate = function () {
+        this
+                .each("start", function () {
+                    d3.select(this).style("fill", "black")
+                })
+                .call(barSvgRect)
+    };
+
+    var barSvgTitle = function () {
+        this
+                .text(barTitleText);
+
+    };
+
+    var barSvgText = function () {
+        this
+                .attr("transform", function (d) {
+                    return "translate(0," + (margin.top + yScale(d.mean) + 20) + ")"
+                })
+                .attr("x", function (d) {
+                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                })
+                .attr("y", 0)
+                .text(barText)
+    };
+
+
+    var barSvgLine = function () {
+        this
+                .attr("x1", function (d) {
+                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                })
+                .attr("x2", function (d) {
+                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                })
+                .attr("y1", function (d) {
+                    return margin.top + yScale(d.upper);
+                })
+                .attr("y2", function (d) {
+                    return margin.top + yScale(d.lower);
+                })
+    };
+
+    var barSvgCircle = function () {
+        this
+                .attr("cx", function (d) {
+                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                })
+                .attr("cy", function (d) {
+                    return margin.top + yScale(d.mean);
+                })
+    };
+
+    // Create a closure for delays.
+    var barSvgUpdate = function (svgFn) {
+        return function () {
+            this
+                    .delay(function (d, i) {
+                        return i * transition_delay;
+                    })
+                    .call(svgFn)
+        };
+    };
+
     function redraw() {
         topCountries = yearDataset.sort(function (a, b) {
             return b.mean - a.mean;
@@ -150,36 +262,8 @@
             return d.location;
         }));
 
-
         // The graph appears more interesting when the y scale remains static.
         yScale.domain([0, meanMaxValue * 1.2]);
-
-        var getBarColor = function () {
-            var gender = genderMenu.property("value");
-            var ageGroup = ageGroupMenu.property("value");
-            if (gender == "male" && ageGroup == "adults") {
-                return "MediumBlue";
-            } else if (gender == "male" && ageGroup == "children") {
-                return "SkyBlue";
-            } else if (gender == "female" && ageGroup == "adults") {
-                return "MediumVioletRed";
-            } else if (gender == "female" && ageGroup == "children") {
-                return "Pink";
-            } else if (gender == "both" && ageGroup == "adults") {
-                return "Green";
-            } else if (gender == "both" && ageGroup == "children") {
-                return "LightGreen";
-            }
-        };
-
-        var barText = function (d) {
-            return Math.round(d.mean * 1000) / 10.0 + "%";
-        };
-
-        var barTitleText = function (d) {
-            return d.location_name + ": " + Math.round(d.lower * 1000) / 10.0 + "% - " +
-                    Math.round(d.upper * 1000) / 10.0 + "%";
-        };
 
         var bar = svg.selectAll(".bar").data(topCountries);
 
@@ -187,18 +271,7 @@
                 .attr("class", "bar");
 
         barEnter.append("rect")
-                .attr("transform", function (d) {
-                    return "translate(0," + (margin.top + yScale(d.mean)) + ")"
-
-                })
-                .attr("height", function (d) {
-                    return height - yScale(d.mean);
-                })
-                .attr("width", xScale.rangeBand())
-                .attr("x", function (d) {
-                    return margin.left + xScale(d.location);
-                })
-                .attr("y", 0)
+                .call(barSvgRect)
                 .on("mouseover", function () {
                     d3.select(this)
                             .style("fill", "orange")
@@ -206,58 +279,42 @@
                 .on("mouseout", function () {
                     d3.select(this)
                             .style("fill", getBarColor)
-                })
-                .append("title")
-                .text(barTitleText);
+                });
+
+        barEnter.append("title")
+                .call(barSvgTitle);
 
         barEnter.append("text")
-                .attr("transform", function (d) {
-                    return "translate(0," + (margin.top + yScale(d.mean) + 20) + ")"
-
-                })
-                .attr("x", function (d) {
-                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
-                })
-                .attr("y", 0)
-                .text(barText)
                 .attr("fill", "white")
                 .attr("text-anchor", "middle")
-                .style("pointer-events", "none");
+                .style("pointer-events", "none")
+                .call(barSvgText);
+
+        barEnter.append("line")
+                .attr("stroke", "black")
+                .attr("stroke-width", "1")
+                .call(barSvgLine);
+
+        barEnter.append("circle")
+                .attr("r", "3")
+                .call(barSvgCircle);
 
         var barUpdate = d3.transition(bar);
 
         barUpdate.select("rect")
-                .each("start", function () {
-                    d3.select(this).style("fill", "black")
-                })
-                .attr("transform", function (d) {
-                    return "translate(0," + (margin.top + yScale(d.mean)) + ")"
-
-                })
-                .attr("height", function (d) {
-                    return height - yScale(d.mean);
-                })
-                .style("fill", getBarColor)
-                .delay(function (d, i) {
-                    return i * 50;
-                });
+                .call(barSvgUpdate(barSvgRectUpdate));
 
         barUpdate.select("title")
-                .text(barTitleText);
+                .call(barSvgUpdate(barSvgTitle));
 
         barUpdate.select("text")
-                .attr("transform", function (d) {
-                    return "translate(0," + (margin.top + yScale(d.mean) + 20) + ")"
+                .call(barSvgUpdate(barSvgText));
 
-                })
-                .attr("x", function (d) {
-                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
-                })
-                .attr("y", 0)
-                .text(barText)
-                .delay(function (d, i) {
-                    return i * transition_delay;
-                });
+        barUpdate.select("line")
+                .call(barSvgUpdate(barSvgLine));
+
+        barUpdate.select("circle")
+                .call(barSvgUpdate(barSvgCircle));
 
         svg.select(".x.axis")
                 .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
@@ -278,14 +335,18 @@
                     d.age_group_id == ageGroupSelected.age_group_id;
         });
 
-        d3.transition().duration(500).each(redraw);
+        d3.transition()
+                .duration(500)
+                .each(redraw);
     }
 
 </script>
 <p id="menuGroup" style="display: none;">Interesting values are
-    <a href="javascript:ageGroupMenu.property('value', 'adults');genderMenu.property('value', 'female');yearMenu.property('value', '2013');change()">female adults in 2013</a>
+    <a href="javascript:ageGroupMenu.property('value', 'adults');genderMenu.property('value', 'female');yearMenu.property('value', '2013');change()">female
+        adults in 2013</a>
     having the highest prevalence of obesity, and
-    <a href="javascript:ageGroupMenu.property('value', 'children');genderMenu.property('value', 'male');yearMenu.property('value', '1990');change()">male children in 1990</a>
+    <a href="javascript:ageGroupMenu.property('value', 'children');genderMenu.property('value', 'male');yearMenu.property('value', '1990');change()">male
+        children in 1990</a>
     having the lowest prevalence of obesity.
 </p>
 </body>
