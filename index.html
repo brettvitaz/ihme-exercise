@@ -33,9 +33,9 @@
 <h4>Graph of the top 10 countries with highest prevalence of obesity by year.</h4>
 <script type="text/javascript">
 
-    var margin = {top: 20, right: 20, bottom: 20, left: 50};
+    var margin = {top: 20, right: 20, bottom: 50, left: 50};
     var width = 720;
-    var height = 320;
+    var height = 320 - margin.bottom - margin.top;
     var transition_delay = 50;
 
     var yearRange;
@@ -174,17 +174,16 @@
 
     var barSvgRect = function () {
         this
-                .attr("transform", function (d) {
-                    return "translate(0," + (margin.top + yScale(d.mean)) + ")"
-                })
                 .attr("height", function (d) {
                     return height - yScale(d.mean);
                 })
                 .attr("width", xScale.rangeBand())
                 .attr("x", function (d) {
-                    return margin.left + xScale(d.location);
+                    return xScale(d.location);
                 })
-                .attr("y", 0)
+                .attr("y", function (d) {
+                    return yScale(d.mean);
+                })
                 .style("fill", getBarColor)
     };
 
@@ -199,45 +198,42 @@
     var barSvgTitle = function () {
         this
                 .text(barTitleText);
-
     };
 
     var barSvgText = function () {
         this
-                .attr("transform", function (d) {
-                    return "translate(0," + (margin.top + yScale(d.mean) + 20) + ")"
-                })
                 .attr("x", function (d) {
-                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                    return (xScale(d.location)) + (xScale.rangeBand() / 2);
                 })
-                .attr("y", 0)
+                .attr("y", function (d) {
+                    return yScale(d.mean) + 20;
+                })
                 .text(barText)
     };
-
 
     var barSvgLine = function () {
         this
                 .attr("x1", function (d) {
-                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                    return (xScale(d.location)) + (xScale.rangeBand() / 2);
                 })
                 .attr("x2", function (d) {
-                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                    return (xScale(d.location)) + (xScale.rangeBand() / 2);
                 })
                 .attr("y1", function (d) {
-                    return margin.top + yScale(d.upper);
+                    return yScale(d.upper);
                 })
                 .attr("y2", function (d) {
-                    return margin.top + yScale(d.lower);
+                    return yScale(d.lower);
                 })
     };
 
     var barSvgCircle = function () {
         this
                 .attr("cx", function (d) {
-                    return (margin.left + xScale(d.location)) + (xScale.rangeBand() / 2);
+                    return (xScale(d.location)) + (xScale.rangeBand() / 2);
                 })
                 .attr("cy", function (d) {
-                    return margin.top + yScale(d.mean);
+                    return yScale(d.mean);
                 })
     };
 
@@ -268,7 +264,10 @@
         var bar = svg.selectAll(".bar").data(topCountries);
 
         var barEnter = bar.enter().insert("g", ".axis")
-                .attr("class", "bar");
+                .attr("class", "bar")
+                .attr("transform", function () {
+                    return "translate(" + margin.left + "," + (margin.top) + ")"
+                });
 
         barEnter.append("rect")
                 .call(barSvgRect)
@@ -296,7 +295,7 @@
                 .call(barSvgLine);
 
         barEnter.append("circle")
-                .attr("r", "3")
+                .attr("r", 3)
                 .call(barSvgCircle);
 
         var barUpdate = d3.transition(bar);
@@ -343,11 +342,9 @@
 </script>
 <p id="menuGroup" style="display: none;">Interesting values are
     <a href="javascript:ageGroupMenu.property('value', 'adults');genderMenu.property('value', 'female');yearMenu.property('value', '2013');change()">female
-        adults in 2013</a>
-    having the highest prevalence of obesity, and
+        adults in 2013</a> having the highest prevalence of obesity, and
     <a href="javascript:ageGroupMenu.property('value', 'children');genderMenu.property('value', 'male');yearMenu.property('value', '1990');change()">male
-        children in 1990</a>
-    having the lowest prevalence of obesity.
+        children in 1990</a> having the lowest prevalence of obesity.
 </p>
 </body>
 </html>
