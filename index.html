@@ -141,7 +141,6 @@
     });
 
     function redraw() {
-        // TODO - D3 can do this. Replace if there is time.
         topCountries = yearDataset.sort(function (a, b) {
             return b.mean - a.mean;
         })
@@ -153,7 +152,6 @@
 
 
         // The graph appears more interesting when the y scale remains static.
-        // yScale.domain([0, topCountries[0].mean * 1.2]);
         yScale.domain([0, meanMaxValue * 1.2]);
 
         var getBarColor = function () {
