@@ -227,6 +227,36 @@
                 })
     };
 
+    var tickSize = 8;
+
+    var barSvgTick = function () {
+        this
+                .attr("x1", function (d) {
+                    return (xScale(d.location)) + ((xScale.rangeBand() - tickSize) / 2);
+                })
+                .attr("x2", function (d) {
+                    return (xScale(d.location)) + ((xScale.rangeBand() + tickSize) / 2);
+                })
+                .attr("y1", 0)
+                .attr("y2", 0)
+    };
+
+    var barSvgTickTop = function () {
+        this
+                .attr("transform", function (d) {
+                    return "translate(0," + (yScale(d.upper)) + ")";
+                })
+                .call(barSvgTick)
+    };
+
+    var barSvgTickBottom = function () {
+        this
+                .attr("transform", function (d) {
+                    return "translate(0," + (yScale(d.lower)) + ")";
+                })
+                .call(barSvgTick)
+    };
+
     var barSvgCircle = function () {
         this
                 .attr("cx", function (d) {
@@ -298,6 +328,18 @@
                 .attr("r", 3)
                 .call(barSvgCircle);
 
+        barEnter.append("line")
+                .attr("class", "tickTop")
+                .attr("stroke", "black")
+                .attr("stroke-width", "1")
+                .call(barSvgTickTop);
+
+        barEnter.append("line")
+                .attr("class", "tickBottom")
+                .attr("stroke", "black")
+                .attr("stroke-width", "1")
+                .call(barSvgTickBottom);
+
         var barUpdate = d3.transition(bar);
 
         barUpdate.select("rect")
@@ -314,6 +356,12 @@
 
         barUpdate.select("circle")
                 .call(barSvgUpdate(barSvgCircle));
+
+        barUpdate.select("line.tickTop")
+                .call(barSvgUpdate(barSvgTickTop));
+
+        barUpdate.select("line.tickBottom")
+                .call(barSvgUpdate(barSvgTickBottom));
 
         svg.select(".x.axis")
                 .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
