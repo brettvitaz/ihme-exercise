@@ -108,7 +108,9 @@
             .attr("id", "uncertaintyCheckbox");
 
     var uncertaintyCheckbox = d3.select("#uncertaintyCheckbox")
-            .on("change", change);
+            .on("change", uncertainty);
+
+    var uc = uncertaintyCheckbox.property("checked");
 
     var dataset;
     var yearDataset;
@@ -221,6 +223,8 @@
     };
 
     var barSvgLine = function () {
+//        var uc = uncertaintyCheckbox.property("checked");
+
         this
                 .attr("x1", function (d) {
                     return (xScale(d.location)) + (xScale.rangeBand() / 2);
@@ -229,12 +233,11 @@
                     return (xScale(d.location)) + (xScale.rangeBand() / 2);
                 })
                 .attr("y1", function (d) {
-                    return yScale(d.upper);
+                    return uc ? yScale(d.upper) : yScale(d.mean);
                 })
                 .attr("y2", function (d) {
-                    return yScale(d.lower);
-                })
-                .style("opacity", +uncertaintyCheckbox.property("checked"))
+                    return uc ? yScale(d.lower) : yScale(d.mean);
+                });
     };
 
     var tickSize = 8;
@@ -249,21 +252,22 @@
                 })
                 .attr("y1", 0)
                 .attr("y2", 0)
-                .style("opacity", +uncertaintyCheckbox.property("checked"))
     };
 
     var barSvgTickTop = function () {
+        var uc = uncertaintyCheckbox.property("checked");
         this
                 .attr("transform", function (d) {
-                    return "translate(0," + (yScale(d.upper)) + ")";
+                    return "translate(0," + (uc ? yScale(d.upper) : yScale(d.mean)) + ")";
                 })
                 .call(barSvgTick)
     };
 
     var barSvgTickBottom = function () {
+        var uc = uncertaintyCheckbox.property("checked");
         this
                 .attr("transform", function (d) {
-                    return "translate(0," + (yScale(d.lower)) + ")";
+                    return "translate(0," + (uc ? yScale(d.lower) : yScale(d.mean)) + ")";
                 })
                 .call(barSvgTick)
     };
@@ -276,7 +280,6 @@
                 .attr("cy", function (d) {
                     return yScale(d.mean);
                 })
-                .style("opacity", +uncertaintyCheckbox.property("checked"))
     };
 
     // Create a closure for delays.
@@ -331,27 +334,32 @@
                 .style("pointer-events", "none")
                 .call(barSvgText);
 
+
         barEnter.append("line")
                 .attr("class", "whiskers")
                 .attr("stroke", "black")
                 .attr("stroke-width", "1")
+                .style("opacity", 0)
                 .call(barSvgLine);
 
-        barEnter.append("circle")
-                .attr("class", "whiskers")
-                .attr("r", 3)
-                .call(barSvgCircle);
+//        barEnter.append("circle")
+//                .attr("class", "whiskers")
+//                .attr("r", 3)
+//                .style("opacity", 0)
+//                .call(barSvgCircle);
 
         barEnter.append("line")
                 .attr("class", "whiskers tickTop")
                 .attr("stroke", "black")
                 .attr("stroke-width", "1")
+                .style("opacity", 0)
                 .call(barSvgTickTop);
 
         barEnter.append("line")
                 .attr("class", "whiskers tickBottom")
                 .attr("stroke", "black")
                 .attr("stroke-width", "1")
+                .style("opacity", 0)
                 .call(barSvgTickBottom);
 
         var barUpdate = d3.transition(bar);
@@ -368,8 +376,8 @@
         barUpdate.select("line")
                 .call(barSvgUpdate(barSvgLine));
 
-        barUpdate.select("circle")
-                .call(barSvgUpdate(barSvgCircle));
+//        barUpdate.select("circle")
+//                .call(barSvgUpdate(barSvgCircle));
 
         barUpdate.select("line.tickTop")
                 .call(barSvgUpdate(barSvgTickTop));
@@ -400,6 +408,55 @@
                 .duration(500)
                 .each(redraw);
     }
+
+    function setOpacity() {
+        this
+                .style("opacity", +uc)
+    }
+
+    function whiskers(whiskerFn) {
+        return uc ? function () {
+            this
+                    .transition()
+                    .duration(0)
+                    .call(barSvgUpdate(setOpacity))
+                    .each("end", function () {
+                        d3.select(this).transition().duration(500)
+                                .call(barSvgUpdate(whiskerFn))
+                    });
+        } : function () {
+            this
+                    .transition()
+                    .duration(500)
+                    .call(barSvgUpdate(whiskerFn))
+                    .each("end", function () {
+                        d3.select(this).transition().duration(0)
+                                .call(barSvgUpdate(setOpacity))
+                    });
+
+        }
+    }
+
+    function uncertainty() {
+        uc = uncertaintyCheckbox.property("checked");
+
+        var barUpdate = d3.selectAll(".bar");
+
+        barUpdate.select("line")
+                .call(whiskers(barSvgLine));
+
+//        barUpdate.select("circle")
+//                .call(barSvgUpdate(barSvgCircle));
+
+        barUpdate.select("line.tickTop")
+                .call(whiskers(barSvgTickTop));
+
+        barUpdate.select("line.tickBottom")
+                .call(whiskers(barSvgTickBottom));
+
+
+    }
+
 
 </script>
 <p id="menuGroup" style="display: none;">Interesting values are
