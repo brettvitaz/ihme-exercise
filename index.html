@@ -101,6 +101,15 @@
     var ageGroupMenu = d3.select("#ageGroupMenu")
             .on("change", change);
 
+    menuGroup.append("p")
+            .text("Uncertainty: ")
+            .append("input")
+            .attr("type", "checkbox")
+            .attr("id", "uncertaintyCheckbox");
+
+    var uncertaintyCheckbox = d3.select("#uncertaintyCheckbox")
+            .on("change", change);
+
     var dataset;
     var yearDataset;
     var topCountries;
@@ -225,6 +234,7 @@
                 .attr("y2", function (d) {
                     return yScale(d.lower);
                 })
+                .style("opacity", +uncertaintyCheckbox.property("checked"))
     };
 
     var tickSize = 8;
@@ -239,6 +249,7 @@
                 })
                 .attr("y1", 0)
                 .attr("y2", 0)
+                .style("opacity", +uncertaintyCheckbox.property("checked"))
     };
 
     var barSvgTickTop = function () {
@@ -265,6 +276,7 @@
                 .attr("cy", function (d) {
                     return yScale(d.mean);
                 })
+                .style("opacity", +uncertaintyCheckbox.property("checked"))
     };
 
     // Create a closure for delays.
@@ -320,22 +332,24 @@
                 .call(barSvgText);
 
         barEnter.append("line")
+                .attr("class", "whiskers")
                 .attr("stroke", "black")
                 .attr("stroke-width", "1")
                 .call(barSvgLine);
 
         barEnter.append("circle")
+                .attr("class", "whiskers")
                 .attr("r", 3)
                 .call(barSvgCircle);
 
         barEnter.append("line")
-                .attr("class", "tickTop")
+                .attr("class", "whiskers tickTop")
                 .attr("stroke", "black")
                 .attr("stroke-width", "1")
                 .call(barSvgTickTop);
 
         barEnter.append("line")
-                .attr("class", "tickBottom")
+                .attr("class", "whiskers tickBottom")
                 .attr("stroke", "black")
                 .attr("stroke-width", "1")
                 .call(barSvgTickBottom);
