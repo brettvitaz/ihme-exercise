@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>IHME JavaScript D3 Exercise</title>
     <script type="text/javascript" src="libs/d3/d3.v3.js"></script>
+    <script type="text/javascript" src="libs/jquery/jquery-2.1.4.js"></script>
     <script type="text/javascript" src="libs/underscore/underscore.js"></script>
     <style type="text/css">
         .bar rect {
@@ -116,44 +117,50 @@
     var yearDataset;
     var topCountries;
 
-    d3.csv("data/IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08.CSV", function (data) {
-        dataset = data.filter(function (d) {
-            return d.metric == metricDesired;
-        });
+    d3.csv("data/IHME_GBD_2013_OBESITY_PREVALENCE_1990_2013_Y2014M10D08_.CSV", function (data) {
+        if (null === data) {
+            d3.select('body')
+                    .append('p')
+                    .text('Could not display chart because the data failed to load.')
+        } else {
+            dataset = data.filter(function (d) {
+                return d.metric == metricDesired;
+            });
 
-        meanMaxValue = d3.max(dataset.filter(function (d) {
-            return d.metric == metricDesired && d.age_group_id == 38
-        }), function (d) {
-            return d.mean
-        });
+            meanMaxValue = d3.max(dataset.filter(function (d) {
+                return d.metric == metricDesired && d.age_group_id == 38
+            }), function (d) {
+                return d.mean
+            });
 
-        yearRange = _.chain(data).pluck("year").unique().compact().reverse().value();
-        genderRange = _.chain(data).pluck("sex").unique().compact().reverse().value();
+            yearRange = _.chain(data).pluck("year").unique().compact().reverse().value();
+            genderRange = _.chain(data).pluck("sex").unique().compact().reverse().value();
 
-        yearMenu.selectAll("option")
-                .data(yearRange)
-                .enter().append("option")
-                .text(function (d) {
-                    return d;
-                });
+            yearMenu.selectAll("option")
+                    .data(yearRange)
+                    .enter().append("option")
+                    .text(function (d) {
+                        return d;
+                    });
 
-        genderMenu.selectAll("option")
-                .data(genderRange)
-                .enter().append("option")
-                .text(function (d) {
-                    return d;
-                });
+            genderMenu.selectAll("option")
+                    .data(genderRange)
+                    .enter().append("option")
+                    .text(function (d) {
+                        return d;
+                    });
 
-        ageGroupMenu.selectAll("option")
-                .data(ageGroupList)
-                .enter().append("option")
-                .text(function (d) {
-                    return d.age_group;
-                });
+            ageGroupMenu.selectAll("option")
+                    .data(ageGroupList)
+                    .enter().append("option")
+                    .text(function (d) {
+                        return d.age_group;
+                    });
 
-        d3.selectAll("#menuGroup").style("display", "block");
+            d3.selectAll("#menuGroup").style("display", "block");
 
-        change();
+            change();
+        }
     });
 
     var barText = function (d) {
